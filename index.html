@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket チャット</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    #chat { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 1em; margin-bottom: 1em; }
+    #username, #message { width: 200px; }
+    #send { margin-left: 1em; }
+  </style>
+</head>
+<body>
+  <h1>WebSocket チャット</h1>
+  <div>
+    <label>ユーザー名: <input type="text" id="username" placeholder="名前を入力"></label>
+  </div>
+  <div id="chat"></div>
+  <input type="text" id="message" placeholder="メッセージを入力">
+  <button id="send">送信</button>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const usernameInput = document.getElementById('username');
+    const messageInput = document.getElementById('message');
+    const sendBtn = document.getElementById('send');
+
+    let ws;
+    function connect() {
+      ws = new WebSocket('ws://localhost:8000/ws');
+      ws.onmessage = (event) => {
+        const msg = document.createElement('div');
+        msg.textContent = event.data;
+        chat.appendChild(msg);
+        chat.scrollTop = chat.scrollHeight;
+      };
+      ws.onclose = () => {
+        setTimeout(connect, 1000); // 自動再接続
+      };
+    }
+    connect();
+
+    sendBtn.onclick = () => {
+      const username = usernameInput.value.trim() || "匿名";
+      const message = messageInput.value.trim();
+      if (message) {
+        ws.send(`[${username}] ${message}`);
+        messageInput.value = '';
+      }
+    };
+
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendBtn.click();
+    });
+  </script>
+</body>
+</html>
